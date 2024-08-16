@@ -1,4 +1,11 @@
 import pandas as pd
+'''
+event data의 한 행을 처리하여, 그 행에 포함된 데이터를 보다 평평한 형태로 변환하는 역할을 합니다. 
+이 함수는 특정 조건에 따라 행위자(actor), 골키퍼(keeper), 팀원(teammate), 상대팀(opponent)의 위치 데이터를 추출하고, 이를 여러 개의 열(column)로 평평하게 정리합니다.
+
+row: 함수가 처리할 event data의 한 행입니다.
+df_frame: frame data로, event_id를 기준으로 필요한 데이터를 추출합니다
+'''
 
 def flatten_columns(row, df_frame):
     sequence = df_frame[df_frame['id'] == row['id']]
@@ -48,3 +55,4 @@ def flatten_columns(row, df_frame):
             flattened[f'opponent_{i+1}_y'] = None
 
     return pd.Series(flattened)
+

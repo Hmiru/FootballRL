@@ -77,8 +77,6 @@ if __name__ == "__main__":
     final_df = pd.read_csv("../dataset/total_data_with_state_label_mask.csv", index_col=0)
     row_data = final_df.iloc[3]
     sample = convert_row_to_sample(row_data)
-    print(sample['freeze_frame_360'])
-
     # Convert to tensor format
     tensor_converter = ToSoccerMapTensor()
     matrix, mask, target = tensor_converter(sample)
@@ -94,8 +92,8 @@ if __name__ == "__main__":
         surface = model(matrix)
         print(surface.shape)
         surface = surface.squeeze(0).squeeze(0).cpu().numpy()  # Move the result back to CPU for visualization
-        print(surface.shape)
-    # # Visualize the action and the predicted surface
+        #결과 텐서에서 불필요한 차원을 제거하고, 시각화를 위해 CPU로 이동하여 NumPy 배열로 변환합니다.
+
     original_action = pd.Series(sample)
     fig, ax = plt.subplots(figsize=(12, 8))
     plot_action(original_action, surface, ax=ax)

@@ -5,10 +5,9 @@ from from_unXpass.dataset.Into_Soccermap_tensor import *
 
 
 class SoccerDataset(Dataset):
-    def __init__(self, samples, transform=None, train=True):
+    def __init__(self, samples, transform=None):
         self.samples = samples
         self.transform = transform
-        self.train = train
 
     def __len__(self):
         return len(self.samples)
@@ -18,10 +17,8 @@ class SoccerDataset(Dataset):
         original_data = sample.copy()  # Store the original data
 
         sample = self.transform(sample)
-        if self.train:
-            return sample  # Always return both
+        return sample  # Always return both
 
-        return sample, original_data  # Always return both
 if __name__ == "__main__":
     # Load your data
     data_path = '../dataset/total_data_with_state_label_mask.csv'

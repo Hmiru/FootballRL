@@ -111,6 +111,12 @@ class ToSoccerMapTensor:
         )
 
 def convert_row_to_sample(row):
+    '''
+    주어진 행 변환하여 샘플 형식으로 만듭니다.
+
+    :param row: pandas DataFrame의 한 행을 나타냅니다. 이 행에는 시작 위치, 끝 위치, 팀원 및 상대 선수들의 위치 정보 등이 포함되어 있습니다.
+    :return: 모델 학습에 사용할 수 있는 딕셔너리 형식의 샘플을 반환합니다.
+    '''
     freeze_frame = []
     freeze_frame.append({'x': row['x'], 'y': row['y'], 'teammate': True, 'actor': True})
 
@@ -143,6 +149,6 @@ if __name__=="__main__":
     tensor_converter = ToSoccerMapTensor()
     matrix, mask, target = tensor_converter(sample)
 
-    print(matrix.shape)
-    print(mask.shape)
-    print(target)
+    print(matrix.shape) # (7, 68, 104)
+    print(mask.shape) # (1, 68, 104)
+    print(target)# tensor([1.]) or tensor([0.])
