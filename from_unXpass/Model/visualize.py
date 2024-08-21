@@ -70,12 +70,11 @@ def plot_action(
 
 
 if __name__ == "__main__":
-    model_path=\
-        "/home/crcteam/PycharmProjects/Football_RL/from_unXpass/Model/lightning_logs/version_54/checkpoints/epoch=0-step=643.ckpt"
+    model_path="/home/crcteam/PycharmProjects/Football_RL/from_unXpass/Model/lightning_logs/version_65/checkpoints/epoch=4-step=4445.ckpt"
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    final_df = pd.read_csv("../dataset/total_data_with_state_label_mask.csv", index_col=0)
-    row_data = final_df.iloc[3]
+    final_df = pd.read_csv("../dataset/WC_EU_LEV_data.csv", index_col=0)
+    row_data = final_df.iloc[10009]
     sample = convert_row_to_sample(row_data)
     # Convert to tensor format
     tensor_converter = ToSoccerMapTensor()

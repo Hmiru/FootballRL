@@ -33,7 +33,8 @@ def flatten_columns(row, df_frame):
         'y': row['y'],
         'end_x': row['end_x'],
         'end_y': row['end_y'],
-        'outcome_name': row['outcome_name']
+        'outcome_name': row['outcome_name'],
+        'if_home_team': row['if_home_team']
     }
 
     # 각 teammate 위치를 별도의 열로 추가

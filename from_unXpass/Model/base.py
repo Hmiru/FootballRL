@@ -60,148 +60,148 @@ class UnxpassComponent(ABC):
         return pickle.load(path.open(mode="rb"))
 
 
-class UnxPassSkLearnComponent(UnxpassComponent):
-    """Base class for an SkLearn-based component."""
+# class UnxPassSkLearnComponent(UnxpassComponent):
+#     """Base class for an SkLearn-based component."""
+#
+#     def __init__(self, model, features, label):
+#         super().__init__(features, label)
+#         self.model = model
+#
+#     def train(self, dataset, optimized_metric=None) -> Optional[float]:
+#         mlflow.sklearn.autolog()
+#
+#         # Load data
+#         data = self.initialize_dataset(dataset)
+#         X_train, y_train = data.features, data.labels
+#
+#         # Train the model
+#         log.info("Fitting model on train set")
+#         self.model.fit(X_train, y_train)
+#
+#         # Return metric score for hyperparameter optimization
+#         if optimized_metric is not None:
+#             cv_score = cross_val_score(
+#                 self.model, X_train, y_train, cv=5, scoring=optimized_metric
+#             )
+#             return np.mean(cv_score, dtype=float)
+#
+#         return None
+#
+#     def test(self, dataset) -> Dict[str, float]:
+#         data = self.initialize_dataset(dataset)
+#         X_test, y_test = data.features, data.labels
+#         y_hat = self.model.predict_proba(X_test)[:, 1]
+#         return self._get_metrics(y_test, y_hat)
+#
+#     def predict(self, dataset) -> pd.Series:
+#         data = self.initialize_dataset(dataset)
+#         y_hat = self.model.predict_proba(data.features)[:, 1]
+#         return pd.Series(y_hat, index=data.features.index)
 
-    def __init__(self, model, features, label):
-        super().__init__(features, label)
-        self.model = model
-
-    def train(self, dataset, optimized_metric=None) -> Optional[float]:
-        mlflow.sklearn.autolog()
-
-        # Load data
-        data = self.initialize_dataset(dataset)
-        X_train, y_train = data.features, data.labels
-
-        # Train the model
-        log.info("Fitting model on train set")
-        self.model.fit(X_train, y_train)
-
-        # Return metric score for hyperparameter optimization
-        if optimized_metric is not None:
-            cv_score = cross_val_score(
-                self.model, X_train, y_train, cv=5, scoring=optimized_metric
-            )
-            return np.mean(cv_score, dtype=float)
-
-        return None
-
-    def test(self, dataset) -> Dict[str, float]:
-        data = self.initialize_dataset(dataset)
-        X_test, y_test = data.features, data.labels
-        y_hat = self.model.predict_proba(X_test)[:, 1]
-        return self._get_metrics(y_test, y_hat)
-
-    def predict(self, dataset) -> pd.Series:
-        data = self.initialize_dataset(dataset)
-        y_hat = self.model.predict_proba(data.features)[:, 1]
-        return pd.Series(y_hat, index=data.features.index)
-
-
-class UnxPassXGBoostComponent(UnxpassComponent):
-    """Base class for an XGBoost-based component."""
-
-    def __init__(self, model, features, label):
-        super().__init__(features, label)
-        self.model = model
-
-    def train(self, dataset, optimized_metric=None, **train_cfg) -> Optional[float]:
-        mlflow.xgboost.autolog()
-
-        # Load data
-        data = self.initialize_dataset(dataset)
-        X_train, X_val, y_train, y_val = train_test_split(
-            data.features, data.labels, test_size=0.2
-        )
-
-        # Train the model
-        log.info("Fitting model on train set")
-        self.model.fit(X_train, y_train, eval_set=[(X_val, y_val)], **train_cfg)
-
-        # Return metric score for hyperparameter optimization
-        if optimized_metric is not None:
-            idx = self.model.best_iteration
-            return self.model.evals_result()["validation_0"][optimized_metric][idx]
-
-        return None
-
-    def test(self, dataset) -> Dict[str, float]:
-        data = self.initialize_dataset(dataset)
-        X_test, y_test = data.features, data.labels
-        if isinstance(self.model, xgb.XGBClassifier):
-            y_hat = self.model.predict_proba(X_test)[:, 1]
-        elif isinstance(self.model, xgb.XGBRegressor):
-            y_hat = self.model.predict(X_test)
-        else:
-            raise AttributeError(f"Unsupported xgboost model: {type(self.model)}")
-        return self._get_metrics(y_test, y_hat)
-
-    def predict(self, dataset) -> pd.Series:
-        data = self.initialize_dataset(dataset)
-        if isinstance(self.model, xgb.XGBClassifier):
-            y_hat = self.model.predict_proba(data.features)[:, 1]
-        elif isinstance(self.model, xgb.XGBRegressor):
-            y_hat = self.model.predict(data.features)
-        else:
-            raise AttributeError(f"Unsupported xgboost model: {type(self.model)}")
-        return pd.Series(y_hat, index=data.features.index)
-
-    def predict_locations(self, dataset, game_id, db, xy_coo, result=None) -> pd.Series:
-        data = self.initialize_dataset(dataset)
-        games = data.features.index.unique(level=0)
-        assert game_id in games, "Game ID not found in dataset!"
-        sim_features = simulate_features(
-            db,
-            game_id,
-            xfns=list(data.xfns.keys()),
-            actionfilter=data.actionfilter,
-            xy=xy_coo,
-            result=result,
-        )
-        cols = [item for sublist in data.xfns.values() for item in sublist]
-        if isinstance(self.model, xgb.XGBClassifier):
-            y_hat = self.model.predict_proba(sim_features[cols])[:, 1]
-        elif isinstance(self.model, xgb.XGBRegressor):
-            y_hat = self.model.predict(sim_features[cols])
-        else:
-            raise AttributeError(f"Unsupported xgboost model: {type(self.model)}")
-        return pd.Series(y_hat, index=data.features.index)
-
-    def predict_surface(
-        self, dataset, game_id, config=None, db=None, x_bins=104, y_bins=68, result=None
-    ) -> Dict:
-        data = self.initialize_dataset(dataset)
-        games = data.features.index.unique(level=0)
-        assert game_id in games, "Game ID not found in dataset!"
-        sim_features = simulate_features(
-            db,
-            game_id,
-            xfns=list(data.xfns.keys()),
-            actionfilter=data.actionfilter,
-            x_bins=x_bins,
-            y_bins=y_bins,
-            result=result,
-        )
-
-        out = {}
-        cols = [item for sublist in data.xfns.values() for item in sublist]
-        for action_id in sim_features.index.unique(level=1):
-            if isinstance(self.model, xgb.XGBClassifier):
-                out[f"action_{action_id}"] = (
-                    self.model.predict_proba(sim_features.loc[(game_id, action_id), cols])[:, 1]
-                    .reshape(x_bins, y_bins)
-                    .T
-                )
-            elif isinstance(self.model, xgb.XGBRegressor):
-                out[f"action_{action_id}"] = (
-                    self.model.predict(sim_features.loc[(game_id, action_id), cols])
-                    .reshape(x_bins, y_bins)
-                    .T
-                )
-            else:
-                raise AttributeError(f"Unsupported xgboost model: {type(self.model)}")
-        return out
+#
+# class UnxPassXGBoostComponent(UnxpassComponent):
+#     """Base class for an XGBoost-based component."""
+#
+#     def __init__(self, model, features, label):
+#         super().__init__(features, label)
+#         self.model = model
+#
+#     def train(self, dataset, optimized_metric=None, **train_cfg) -> Optional[float]:
+#         mlflow.xgboost.autolog()
+#
+#         # Load data
+#         data = self.initialize_dataset(dataset)
+#         X_train, X_val, y_train, y_val = train_test_split(
+#             data.features, data.labels, test_size=0.2
+#         )
+#
+#         # Train the model
+#         log.info("Fitting model on train set")
+#         self.model.fit(X_train, y_train, eval_set=[(X_val, y_val)], **train_cfg)
+#
+#         # Return metric score for hyperparameter optimization
+#         if optimized_metric is not None:
+#             idx = self.model.best_iteration
+#             return self.model.evals_result()["validation_0"][optimized_metric][idx]
+#
+#         return None
+#
+#     def test(self, dataset) -> Dict[str, float]:
+#         data = self.initialize_dataset(dataset)
+#         X_test, y_test = data.features, data.labels
+#         if isinstance(self.model, xgb.XGBClassifier):
+#             y_hat = self.model.predict_proba(X_test)[:, 1]
+#         elif isinstance(self.model, xgb.XGBRegressor):
+#             y_hat = self.model.predict(X_test)
+#         else:
+#             raise AttributeError(f"Unsupported xgboost model: {type(self.model)}")
+#         return self._get_metrics(y_test, y_hat)
+#
+#     def predict(self, dataset) -> pd.Series:
+#         data = self.initialize_dataset(dataset)
+#         if isinstance(self.model, xgb.XGBClassifier):
+#             y_hat = self.model.predict_proba(data.features)[:, 1]
+#         elif isinstance(self.model, xgb.XGBRegressor):
+#             y_hat = self.model.predict(data.features)
+#         else:
+#             raise AttributeError(f"Unsupported xgboost model: {type(self.model)}")
+#         return pd.Series(y_hat, index=data.features.index)
+#
+#     def predict_locations(self, dataset, game_id, db, xy_coo, result=None) -> pd.Series:
+#         data = self.initialize_dataset(dataset)
+#         games = data.features.index.unique(level=0)
+#         assert game_id in games, "Game ID not found in dataset!"
+#         sim_features = simulate_features(
+#             db,
+#             game_id,
+#             xfns=list(data.xfns.keys()),
+#             actionfilter=data.actionfilter,
+#             xy=xy_coo,
+#             result=result,
+#         )
+#         cols = [item for sublist in data.xfns.values() for item in sublist]
+#         if isinstance(self.model, xgb.XGBClassifier):
+#             y_hat = self.model.predict_proba(sim_features[cols])[:, 1]
+#         elif isinstance(self.model, xgb.XGBRegressor):
+#             y_hat = self.model.predict(sim_features[cols])
+#         else:
+#             raise AttributeError(f"Unsupported xgboost model: {type(self.model)}")
+#         return pd.Series(y_hat, index=data.features.index)
+#
+#     def predict_surface(
+#         self, dataset, game_id, config=None, db=None, x_bins=104, y_bins=68, result=None
+#     ) -> Dict:
+#         data = self.initialize_dataset(dataset)
+#         games = data.features.index.unique(level=0)
+#         assert game_id in games, "Game ID not found in dataset!"
+#         sim_features = simulate_features(
+#             db,
+#             game_id,
+#             xfns=list(data.xfns.keys()),
+#             actionfilter=data.actionfilter,
+#             x_bins=x_bins,
+#             y_bins=y_bins,
+#             result=result,
+#         )
+#
+#         out = {}
+#         cols = [item for sublist in data.xfns.values() for item in sublist]
+#         for action_id in sim_features.index.unique(level=1):
+#             if isinstance(self.model, xgb.XGBClassifier):
+#                 out[f"action_{action_id}"] = (
+#                     self.model.predict_proba(sim_features.loc[(game_id, action_id), cols])[:, 1]
+#                     .reshape(x_bins, y_bins)
+#                     .T
+#                 )
+#             elif isinstance(self.model, xgb.XGBRegressor):
+#                 out[f"action_{action_id}"] = (
+#                     self.model.predict(sim_features.loc[(game_id, action_id), cols])
+#                     .reshape(x_bins, y_bins)
+#                     .T
+#                 )
+#             else:
+#                 raise AttributeError(f"Unsupported xgboost model: {type(self.model)}")
+#         return out
 
 
 class UnxPassPytorchComponent(UnxpassComponent):

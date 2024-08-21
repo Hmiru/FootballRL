@@ -7,6 +7,7 @@ from pytorch_lightning.callbacks import ModelCheckpoint, EarlyStopping
 from from_unXpass.dataset.dataloader import SoccerDataset
 from from_unXpass.dataset.Into_Soccermap_tensor import ToSoccerMapTensor, convert_row_to_sample
 from from_unXpass.Model.Soccermap import PytorchSoccerMapModel
+
 import logging
 '''
     ModelTrainer 클래스는 데이터를 로드하고 모델을 학습하는 역할을 수행합니다.
@@ -58,6 +59,8 @@ class ModelTrainer:
         val_loader = DataLoader(self.val_dataset, batch_size=self.batch_size)
 
         model = PytorchSoccerMapModel(lr=self.lr)
+
+
         checkpoint_callback = ModelCheckpoint(monitor='val/loss', save_top_k=1, mode='min')
         early_stop_callback = EarlyStopping(monitor='val/loss', patience=3, mode='min')
 
@@ -82,11 +85,11 @@ class ModelTrainer:
         print(f"테스트 결과: {results}")
 
 if __name__ == "__main__":
-    data_path = '../dataset/total_data_with_state_label_mask.csv'
+    data_path = '../dataset/WC_EU_LEV_data.csv'
     transform = ToSoccerMapTensor(dim=(68, 104))
 
     # 트레이너 초기화 및 모델 학습
-    trainer = ModelTrainer(data_path=data_path, transform=transform, lr=1e-5, max_epochs=1)
+    trainer = ModelTrainer(data_path=data_path, transform=transform, lr=1e-6, max_epochs=5)
     trainer.load_data()
     trainer.train()
 

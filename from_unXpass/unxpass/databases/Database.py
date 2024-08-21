@@ -1,7 +1,7 @@
 """Utility functions for data loading and preprocessing operations."""
 import os
 from abc import ABC, abstractmethod
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Mapping, Any, Dict, List, Optional, Tuple
 
 import matplotlib.path as mpl_path
 import numpy as np
@@ -12,7 +12,7 @@ from rich.progress import track
 from socceraction.data.statsbomb import StatsBombLoader
 from socceraction.spadl.config import field_length, field_width
 
-from unxpass.config import logger
+from from_unXpass.unxpass.config import logger
 
 
 TABLE_COMPETITIONS = [
@@ -178,19 +178,19 @@ def _inside_polygon(x: float, y: float, polygon: List[Tuple[float, float]]) -> b
 
 
 class Database(ABC):
-    """Wrapper for a database holding the raw data.
+    """Wrapper for a databases holding the raw data.
 
     Parameters
     ----------
     mode : {'r', 'w', 'a'}, default 'r'
-        The mode to open the database with.
+        The mode to open the databases with.
     """
 
     def __init__(self, mode: str) -> None:
         self.mode = mode
 
     def __enter__(self):  # type: ignore
-        """Make a database connection and return it."""
+        """Make a databases connection and return it."""
         return self
 
     def __exit__(  # type: ignore
@@ -199,16 +199,16 @@ class Database(ABC):
         exc_val,
         exc_tb,
     ):
-        """Close the database connection."""
+        """Close the databases connection."""
         self.close()
 
     def close(self) -> None:
-        """Close the database connection."""
+        """Close the databases connection."""
 
     def import_data(
         self,
         getter: str = "local",
-        root: Optional[os.PathLike[str]] = None,
+        root: Optional[os.PathLike] = None,
         creds: Optional[Dict[str, str]] = None,
         competition_id: Optional[int] = None,
         season_id: Optional[int] = None,

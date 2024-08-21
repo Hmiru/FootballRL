@@ -21,7 +21,7 @@ class SoccerDataset(Dataset):
 
 if __name__ == "__main__":
     # Load your data
-    data_path = '../dataset/total_data_with_state_label_mask.csv'
+    data_path = 'WC_EU_LEV_data.csv'
     df = pd.read_csv(data_path, index_col=0)
 
     # Apply the transformation to each row
@@ -40,8 +40,8 @@ if __name__ == "__main__":
 
     # Test dataloader to visualize data
     test_dataloader = DataLoader(val_dataset, batch_size=1, shuffle=False)
-    batch, original_data_batch = next(iter(test_dataloader))
+    batch = next(iter(test_dataloader))
 
     # Print the transformed batch and original data
     print(batch)
-    print(original_data_batch)
+
